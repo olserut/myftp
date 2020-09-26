@@ -107,33 +107,42 @@ while sent == 0:
       sendMsg(cmd)
       data = pasvSckt.recv(4096).decode()
       print(data)
+
     elif cmdList[0]== 'cd':
       cmd = ('CWD ')
       cmd += input('Remote directory:')
       cmd += ('\n')
       sendMsg(cmd)
       continue
+
     elif cmdList[0] == 'get':
       cmd = ('RETR ')
       cmd += input('Enter pathname:')
       cmd += ('\n')
-    elif cmdList[0] == 'put':
-      cmd = ('STOR ')
-      filePath = input('Enter pathname:')
-      exists = os.path.exists(filePath)
-      if exists == True:
-          cmd += filePath
-          cmd += ('\n')
-          sendMsg(cmd)
-          fileSize =  os.path.getsize(filePath)
-          file = open(filePath, 'wb')
-          sent = pasvSckt.sendfile(file)
-          if sent == None:
-              print('File transfer complete')
-          else:
-              print('Transmission error')
-      else:
-          print('Unable to find file')
+
+    elif cmdList[0] == 'put': 
+        cmd = ('STOR ') 
+        filePath = input('Enter pathname:') 
+        exists = os.path.exists(filePath) 
+        if exists == True: 
+            cmd += filePath 
+            cmd += ('\n') 
+            sendMsg(cmd) 
+            with open(filePath, 'rb') as f: 
+            bytes_read = f.read(4096) 
+            if not bytes_read: 
+                continue  
+            
+            sent = pasvSckt.sendall(f) 
+            if sent == None: 
+                print('File transfer complete') 
+                continue 
+            else: 
+                print('Transmission error') 
+                continue 
+        else: 
+            print('Unable to find file') 
+            continue
 
     elif cmdList[0] == 'delete':
       cmd = ('DELE ')
@@ -141,6 +150,7 @@ while sent == 0:
       cmd += ('\n')
       sendMsg(cmd)
       continue
+
     elif cmdList[0] == 'quit':
       sent = 1
       cmd = ('QUIT\n')
