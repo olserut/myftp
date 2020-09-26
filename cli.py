@@ -26,7 +26,9 @@ def login():
     return success
 
 def makePASV():
-    pass
+    pasvResp = PASV()
+    dataPort = pasvParser(pasvResp)
+    pasvSckt.connect((serverName,dataPort))
 
 def pasvStrip(response, char):
     list = response.split(char)
@@ -96,17 +98,16 @@ sent = 0
 #sentinel value for while loop
 while sent == 0:
     pasvSckt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    pasvResp = PASV()
-    dataPort = pasvParser(pasvResp)
-    pasvSckt.connect((serverName,dataPort))
     cmd = input('myftp>')
     cmdList = cmd.split(' ')
 
     if cmdList[0] == 'ls':
       cmd = ('LIST\n')
+      makePASV()
       sendMsg(cmd)
       data = pasvSckt.recv(4096).decode()
       print(data)
+      pasvSckt.close()
 
     elif cmdList[0]== 'cd':
       cmd = ('CWD ')
@@ -114,36 +115,40 @@ while sent == 0:
       cmd += ('\n')
       sendMsg(cmd)
       continue
-
+#-------------------------------------------------------------------------------
     elif cmdList[0] == 'get':
       cmd = ('RETR ')
       cmd += input('Enter pathname:')
       cmd += ('\n')
 
-    elif cmdList[0] == 'put': 
-        cmd = ('STOR ') 
-        filePath = input('Enter pathname:') 
-        exists = os.path.exists(filePath) 
-        if exists == True: 
-            cmd += filePath 
-            cmd += ('\n') 
-            sendMsg(cmd) 
-            with open(filePath, 'rb') as f: 
-            bytes_read = f.read(4096) 
-            if not bytes_read: 
-                continue  
-            
-            sent = pasvSckt.sendall(f) 
-            if sent == None: 
-                print('File transfer complete') 
-                continue 
-            else: 
-                print('Transmission error') 
-                continue 
-        else: 
-            print('Unable to find file') 
-            continue
+#-------------------------------------------------------------------------------
+    elif cmdList[0] == 'put':
+      cmd = ('STOR ')
+      filePath = input('Enter pathname:')
+      exists = os.path.exists(filePath)
+      #check if file exists
 
+      if exists == True:
+          cmd += filePath
+          cmd += ('\n')
+          makePASV()
+          sendMsg(cmd)
+
+          # server listening for client to connect and send a file
+          with open(filePath, 'rb') as f:
+              bytes_read = f.read(4096)
+              if not bytes_read:
+                  continue
+
+              pasvSckt.sendall(bytes_read)
+              pasvSckt.close()
+      else:
+          print('Unable to find file')
+          pasvSckt.close()
+          continue
+
+
+#-------------------------------------------------------------------------------
     elif cmdList[0] == 'delete':
       cmd = ('DELE ')
       cmd += input('Enter pathname:')
@@ -158,6 +163,7 @@ while sent == 0:
       s.close()
       pasvSckt.close()
       sys.exit()
+
     else:
       print('Invalid input, Available commands:')
       print('ls, cd, put, get, delete, quit')
@@ -165,8 +171,6 @@ while sent == 0:
 
     cmd = ('')
     sendMsg(cmd)
-    pasvSckt.close()
-
-
 
 s.close()
+
