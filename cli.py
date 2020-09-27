@@ -120,13 +120,20 @@ while sent == 0:
 #-------------------------------------------------------------------------------
     elif cmdList[0] == 'get':
       cmd = ('RETR ')
-      cmd += input('Enter pathname:')
+      cmd += input('Enter filename:')
       cmd += ('\n')
       sendMsg(cmd)
 
+      cmd = input('Enter a new filename:')
+      filePath = os.path.basename(cmd)
       with open(filePath, 'wb') as f:
-          bytes_read = f.read(4096)
-          pasvSckt.sendall(bytes_read)
+          bytes_read = pasvSckt.recv(4096)
+          if not bytes_read:
+              break
+          #filesize = os.path.getsize(filePath)
+          #print('Transferring:', filesize, 'K/b\'s')
+          f.write(bytes_read)
+          f.close()
 
 #-------------------------------------------------------------------------------
     elif cmdList[0] == 'put':
