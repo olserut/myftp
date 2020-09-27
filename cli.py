@@ -67,7 +67,6 @@ except IndexError:
             raise ValueError("Failed to connect to '%s': %s" % (serverName, str(err)))
     #todo tweaking
     #Handle gaia error
-    #create loop for error 
 try:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 except socket.error as err_msg:
@@ -90,6 +89,7 @@ while logSucess[0] != '230':
     logOk = login()
     logSucess = logOk.split(' ')
 
+
 #-------------------------------------------------------------------------------
 # Client module
 #-------------------------------------------------------------------------------
@@ -100,14 +100,15 @@ while sent == 0:
     pasvSckt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     cmd = input('myftp>')
     cmdList = cmd.split(' ')
+    makePASV()
+
 
     if cmdList[0] == 'ls':
       cmd = ('LIST\n')
-      makePASV()
       sendMsg(cmd)
       data = pasvSckt.recv(4096).decode()
       print(data)
-      pasvSckt.close()
+
 
     elif cmdList[0]== 'cd':
       cmd = ('CWD ')
@@ -115,11 +116,17 @@ while sent == 0:
       cmd += ('\n')
       sendMsg(cmd)
       continue
+
 #-------------------------------------------------------------------------------
     elif cmdList[0] == 'get':
       cmd = ('RETR ')
       cmd += input('Enter pathname:')
       cmd += ('\n')
+      sendMsg(cmd)
+
+      with open(filePath, 'wb') as f:
+          bytes_read = f.read(4096)
+          pasvSckt.sendall(bytes_read)
 
 #-------------------------------------------------------------------------------
     elif cmdList[0] == 'put':
@@ -131,20 +138,15 @@ while sent == 0:
       if exists == True:
           cmd += filePath
           cmd += ('\n')
-          makePASV()
           sendMsg(cmd)
 
           # server listening for client to connect and send a file
           with open(filePath, 'rb') as f:
               bytes_read = f.read(4096)
-              if not bytes_read:
-                  continue
-
               pasvSckt.sendall(bytes_read)
-              pasvSckt.close()
+
       else:
           print('Unable to find file')
-          pasvSckt.close()
           continue
 
 
@@ -160,8 +162,6 @@ while sent == 0:
       sent = 1
       cmd = ('QUIT\n')
       sendMsg(cmd)
-      s.close()
-      pasvSckt.close()
       sys.exit()
 
     else:
@@ -169,8 +169,11 @@ while sent == 0:
       print('ls, cd, put, get, delete, quit')
       continue
 
+    pasvSckt.close()
     cmd = ('')
     sendMsg(cmd)
 
-s.close()
 
+
+
+s.close()
