@@ -67,6 +67,7 @@ except IndexError:
             raise ValueError("Failed to connect to '%s': %s" % (serverName, str(err)))
     #todo tweaking
     #Handle gaia error
+    #create loop for error 
 try:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 except socket.error as err_msg:
@@ -88,7 +89,6 @@ logSucess = logOk.split(' ')
 while logSucess[0] != '230':
     logOk = login()
     logSucess = logOk.split(' ')
-
 
 #-------------------------------------------------------------------------------
 # Client module
