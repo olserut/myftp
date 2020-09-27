@@ -6,4 +6,4 @@ Link:https://github.com/olserut/myftp
 
 #Language: Python
 
-#run with py ~\cli.py ftpServername<inet.cs.fiu.edu>
+#run with py ~\cli.py <serverName>
